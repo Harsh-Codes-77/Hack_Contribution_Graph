@@ -1,9 +1,41 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import moment from "moment-timezone";
+import JSON5 from "json5";
 import { validateConfig } from "./lib/validate.js";
 import { buildPlan } from "./lib/schedule.js";
 import { distributeTimesOnDate } from "./lib/timestamps.js";
+
+test("Test 11 — commented-out dates in config are ignored (JSON5 comments)", () => {
+    const raw = `{
+        "timezone": "Asia/Kolkata",
+        "mode": "scheduled",
+        "schedule": [
+            { "date": "2026-09-07", "commits": 5 }
+            // ,{ "date": "2026-08-30", "commits": 3 }
+            /* ,{ "date": "2026-09-15", "commits": 2 } */
+        ]
+    }`;
+    const config = JSON5.parse(raw);
+    const res = validateConfig(config);
+    assert.equal(res.ok, true);
+    assert.equal(config.schedule.length, 1);
+    assert.equal(config.schedule[0].date, "2026-09-07");
+});
+
+test("Test 12 — trailing commas are allowed (JSON5)", () => {
+    const raw = `{
+        "timezone": "Asia/Kolkata",
+        "mode": "scheduled",
+        "schedule": [
+            { "date": "2026-09-07", "commits": 5 },
+        ],
+    }`;
+    const config = JSON5.parse(raw);
+    const res = validateConfig(config);
+    assert.equal(res.ok, true);
+    assert.equal(config.schedule.length, 1);
+});
 
 function timesFor(config, date) {
     const plan = buildPlan(config);

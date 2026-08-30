@@ -204,6 +204,25 @@ Everything lives in a single file: **`config.json`**.
 
 Every date **not** listed in `schedule` gets **zero** commits.
 
+### Comments are allowed in config.json
+
+`config.json` is parsed as **JSON5**, so you can use `//` and `/* */` comments and trailing commas. This makes it easy to temporarily turn dates on/off by commenting them out:
+
+```json
+{
+  "timezone": "Asia/Kolkata",
+  "mode": "scheduled",
+
+  "schedule": [
+    { "date": "2026-09-07", "commits": 5 }
+    // ,{ "date": "2026-08-30", "commits": 3 }   <- commented out, no commits
+    /* ,{ "date": "2026-09-15", "commits": 2 } */ <- commented out, no commits
+  ]
+}
+```
+
+The commented entries are simply ignored — only `2026-09-07` gets commits. You can comment out a date, run the tool, and later uncomment it to re-add it.
+
 ---
 
 ## How to specify dates and commit counts

@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import simpleGit from "simple-git";
 import moment from "moment-timezone";
+import JSON5 from "json5";
 import { validateConfig } from "./lib/validate.js";
 import { buildPlan } from "./lib/schedule.js";
 import { readState, writeState, STATE_FILE } from "./lib/state.js";
@@ -24,9 +25,10 @@ function loadConfig() {
     }
     let config;
     try {
-        config = JSON.parse(raw);
+        config = JSON5.parse(raw);
     } catch (e) {
-        console.error(`config.json is not valid JSON: ${e.message}`);
+        console.error(`config.json is not valid: ${e.message}`);
+        console.error("Note: comments like // and /* */ and trailing commas ARE allowed in config.json.");
         process.exit(1);
     }
     return config;
