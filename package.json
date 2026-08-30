@@ -5,7 +5,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "run": "node index.js run",
+    "dry-run": "node index.js dry-run",
+    "validate": "node index.js validate",
+    "status": "node index.js status",
+    "test": "node --test"
   },
   "repository": {
     "type": "git",
@@ -21,6 +25,7 @@
   "dependencies": {
     "jsonfile": "^6.2.0",
     "moment": "^2.30.1",
+    "moment-timezone": "^0.6.3",
     "random": "^5.4.1",
     "simple-git": "^3.28.0"
   }

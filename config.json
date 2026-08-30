@@ -1,0 +1,23 @@
+{
+  "timezone": "Asia/Kolkata",
+  "mode": "scheduled",
+
+  "schedule": [
+    {
+      "date": "2026-08-30",
+      "commits": 3
+    },
+    {
+      "date": "2026-09-02",
+      "commits": 1
+    },
+    {
+      "date": "2026-09-07",
+      "commits": 5
+    },
+    {
+      "date": "2026-09-15",
+      "commits": 2
+    }
+  ]
+}

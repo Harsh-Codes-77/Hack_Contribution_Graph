@@ -1,0 +1,5 @@
+node_modules/
+
+# Local execution state — never commit this to the repo.
+# It tracks how many commits have already been created per date.
+state.json
