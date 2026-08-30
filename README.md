@@ -1,179 +1,28 @@
 # Hack Contribution Graph
 
-A small Node.js tool that creates Git commits **only on the exact dates you choose**, so you have full control over your GitHub contribution graph.
+A Node.js tool that creates Git commits **only on the exact dates you choose**, so you have full control over your GitHub contribution graph.
 
 > **Core rule: You decide the dates. The program executes ONLY those dates.**
 > It never runs on its own every day, and it never picks random dates.
 
 ---
 
-## Why this exists
+## Quick Start (use it in 5 minutes)
 
-The original version of this project generated commits **randomly** across the last year:
-
-- Pick a random week (`random.int(0, 54)`) and a random day (`random.int(0, 6)`).
-- Turn that into a random date within the past year.
-- Repeat a hard-coded 50 times.
-
-That produced a "noisy", uncontrolled contribution graph. This new version lets you point at a schedule and create exactly the commits you want — nothing more.
-
----
-
-## Requirements
-
-- **Node.js** v18 or newer (tested on v22)
-- **Git** (with push access to your remote)
-- **npm**
-
-Check your versions:
-
-```bash
-node -v
-npm -v
-```
-
----
-
-## Installation
+### 1. Clone this repo
 
 ```bash
 git clone https://github.com/Harsh-Codes-77/Hack_Contribution_Graph.git
 cd Hack_Contribution_Graph
+```
+
+### 2. Install dependencies
+
+```bash
 npm install
 ```
 
----
-
-## Running it on THIS live repo (as the repo owner)
-
-Your cloned repo already points at the live GitHub repo via its `origin` remote. To run the tool on it:
-
-```bash
-cd Hack_Contribution_Graph
-
-# 1. Make sure it is the latest, and confirm your remote
-git pull origin main
-git remote -v        # should show https://github.com/Harsh-Codes-77/Hack_Contribution_Graph
-
-# 2. Install dependencies the first time
-npm install
-
-# 3. Edit config.json with your schedule (dates + commit counts)
-
-# 4. Preview what will happen (no changes made)
-npm run validate
-npm run dry-run
-
-# 5. Actually create the commits and push them to GitHub
-npm run run
-
-# 6. Check progress at any time
-npm run status
-```
-
-Because this repo is its own Git repository, `npm run run` literally rewrites this repo's history on the dates in `config.json`, then pushes those commits to your `origin/main`.
-
-> The commits created by `npm run run` all touch the `data.json` file, so the tool itself lives in history alongside the scheduled commits.
-
----
-
-## Using it on YOUR OWN repository
-
-You don't have to use this repo as the target. Anyone can reuse the tool on their own GitHub repository. There are two ways:
-
-### Option A — Run inside your own repo (recommended)
-
-Copy the tool's scripts into your own repository, so the scheduled commits modify **your** files and get pushed to **your** repo.
-
-```bash
-cd path/to/your-own-repo
-
-# Copy the tool files in
-cp /path/to/cloned/Hack_Contribution_Graph/index.js \
-   /path/to/cloned/Hack_Contribution_Graph/config.json \
-   /path/to/cloned/Hack_Contribution_Graph/package.json \
-   /path/to/cloned/Hack_Contribution_Graph/.gitignore \
-   .
-cp -r /path/to/cloned/Hack_Contribution_Graph/lib .
-
-# (Also copy index.test.js if you want the tests.)
-
-# Install the tool's dependencies
-npm install
-
-# Edit config.json
-#   - set timezone to YOUR timezone
-#   - set the schedule (date + commits per date)
-
-# Verify your remote points at YOUR repo
-git remote -v
-
-# Preview, then run
-npm run validate
-npm run dry-run
-npm run run
-```
-
-`npm run run` now writes commits into **your** repository and pushes them to **your** remote. The `config.json`/`index.js`/`lib/` files become part of your repo (and, if you commit them first, will already appear on your graph). Keep `state.json` out of git: it is already covered by the `.gitignore` in this repo and is local-only.
-
-### Option B — Do it without copying
-
-If you only want the *mechanism* but prefer not to copy files, you can point the existing clone at a different remote:
-
-```bash
-# Inside your Hack_Contribution_Graph clone
-git remote set-url origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
-```
-
-then edit `config.json` and run `npm run run`. The tool will push scheduled commits to whichever repo `origin` points at. (This replaces the repo's history with your scheduled commits, so only use it on a repo you want to fill with scheduled commits.)
-
----
-
-## First-time setup checklist for a new/own repo
-
-1. **Choose a target repo** — an empty or scratch repo works best.
-2. **Install Node + Git** — see Requirements.
-3. **Clone or copy** the tool into that repo (Option A).
-4. **Set your timezone** in `config.json`.
-5. **Write your schedule** (dates + commit counts).
-6. **Confirm the remote** — `git remote -v` must point at the repo you want to fill.
-7. **Run `npm run validate` and `npm run dry-run`** first.
-8. **Run `npm run run`** to create and push the commits.
-
----
-
-## How it works
-
-```
-config.json        ->  your schedule (the source of truth)
-        |
-        v
-validation          ->  checks dates, counts, duplicates, timezone
-        |
-        v
-schedule parser     ->  turns config into a plan
-        |
-        v
-timestamp generator ->  builds timezone-aware timestamps across the day
-        |
-        v
-execution/state check -> compares the plan with what is already done
-        |
-        v
-commit creation        ->  creates the remaining commits only
-        |
-        v
-verification           ->  confirms every commit belongs to its configured date
-        |
-        v
-push                   ->  pushes to your remote, then records state
-```
-
----
-
-## Configuration
-
-Everything lives in a single file: **`config.json`**.
+### 3. Edit `config.json` with your schedule
 
 ```json
 {
@@ -189,59 +38,131 @@ Everything lives in a single file: **`config.json`**.
 }
 ```
 
-### Fields
+### 4. Preview what will happen
 
-| Field | Meaning |
-|-------|---------|
-| `timezone` | IANA timezone (e.g. `"Asia/Kolkata"`). Defaults to `"Asia/Kolkata"`. |
-| `mode` | `"scheduled"` (default) or `"random"` (optional). See below. |
-| `schedule` | An array of `{ date, commits }` entries. This is the only thing that decides which dates get commits. |
-
-### `schedule` entries
-
-- **`date`** — the calendar day, in `YYYY-MM-DD` format. Only this day gets commits.
-- **`commits`** — how many commits to create on that day (a positive integer).
-
-Every date **not** listed in `schedule` gets **zero** commits.
-
-### Comments are allowed in config.json
-
-`config.json` is parsed as **JSON5**, so you can use `//` and `/* */` comments and trailing commas. This makes it easy to temporarily turn dates on/off by commenting them out:
-
-```json
-{
-  "timezone": "Asia/Kolkata",
-  "mode": "scheduled",
-
-  "schedule": [
-    { "date": "2026-09-07", "commits": 5 }
-    // ,{ "date": "2026-08-30", "commits": 3 }   <- commented out, no commits
-    /* ,{ "date": "2026-09-15", "commits": 2 } */ <- commented out, no commits
-  ]
-}
+```bash
+npm run dry-run
 ```
 
-The commented entries are simply ignored — only `2026-09-07` gets commits. You can comment out a date, run the tool, and later uncomment it to re-add it.
+### 5. Run it
+
+```bash
+npm run run
+```
+
+Done. The commits are created and pushed to your GitHub.
 
 ---
 
-## How to specify dates and commit counts
+## How to Use on YOUR OWN Repository
 
-You control dates by editing `config.json`. Some examples:
+You don't have to use this repo as the target. Anyone can reuse it on their own GitHub repo. Here's exactly how.
 
-**One date:**
+### Step 1: Create your own repo on GitHub
+
+Go to [github.com/new](https://github.com/new) and create a new repository (empty or with a README).
+
+### Step 2: Clone this tool
+
+```bash
+git clone https://github.com/Harsh-Codes-77/Hack_Contribution_Graph.git
+cd Hack_Contribution_Graph
+npm install
+```
+
+### Step 3: Point it at your repo
+
+```bash
+git remote set-url origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
+```
+
+Replace `YOUR-USERNAME` and `YOUR-REPO` with your actual GitHub username and repository name.
+
+Verify:
+
+```bash
+git remote -v
+# Should show: https://github.com/YOUR-USERNAME/YOUR-REPO.git
+```
+
+### Step 4: Make sure your Git identity is set
+
+The tool uses your Git author name and email for the scheduled commits. GitHub only counts commits on your contribution graph if the author email matches a verified email on your account.
+
+```bash
+git config user.name "Your Name"
+git config user.email "your-email@gmail.com"
+```
+
+Verify:
+
+```bash
+git config user.name
+git config user.email
+```
+
+### Step 5: Edit `config.json`
+
+Set your timezone and the dates you want commits on:
 
 ```json
 {
   "timezone": "Asia/Kolkata",
   "mode": "scheduled",
+
   "schedule": [
-    { "date": "2026-08-30", "commits": 3 }
+    { "date": "2026-09-01", "commits": 2 },
+    { "date": "2026-09-05", "commits": 4 },
+    { "date": "2026-09-10", "commits": 1 }
   ]
 }
 ```
 
-**My example schedule (3, 1, 7, 2):**
+### Step 6: Preview and run
+
+```bash
+npm run validate    # check config for errors
+npm run dry-run     # preview what will happen
+npm run run         # create commits and push
+```
+
+That's it. The commits will appear on your GitHub contribution graph on the dates you specified.
+
+---
+
+## Using on a Fresh/Empty Repo (Recommended)
+
+For best results, use an empty or scratch repo. The tool creates commits by modifying `data.json`, so an empty repo avoids conflicts with existing files.
+
+```bash
+# Create an empty repo on GitHub, then:
+git clone https://github.com/YOUR-USERNAME/YOUR-REPO.git
+cd YOUR-REPO
+
+# Copy the tool files from this repo
+cp /path/to/Hack_Contribution_Graph/index.js .
+cp /path/to/Hack_Contribution_Graph/config.json .
+cp /path/to/Hack_Contribution_Graph/package.json .
+cp /path/to/Hack_Contribution_Graph/.gitignore .
+cp -r /path/to/Hack_Contribution_Graph/lib .
+
+# Install dependencies
+npm install
+
+# Configure your schedule
+# Edit config.json with your dates
+
+# Run
+npm run validate
+npm run dry-run
+npm run run
+```
+
+---
+
+## Configuration Reference
+
+Everything lives in one file: **`config.json`**.
 
 ```json
 {
@@ -250,115 +171,85 @@ You control dates by editing `config.json`. Some examples:
 
   "schedule": [
     { "date": "2026-08-30", "commits": 3 },
-    { "date": "2026-09-02", "commits": 1 },
-    { "date": "2026-09-07", "commits": 7 },
-    { "date": "2026-09-15", "commits": 2 }
+    { "date": "2026-09-02", "commits": 1 }
   ]
 }
 ```
 
-Resulting graph:
+### Fields
 
-```
-2026-08-30  ->  ███
-2026-08-31  ->
-2026-09-01  ->
-2026-09-02  ->  █
-2026-09-03  ->
-...
-2026-09-07  ->  ███████
-...
-2026-09-15  ->  ██
+| Field | What it does |
+|-------|-------------|
+| `timezone` | Your IANA timezone (e.g. `"Asia/Kolkata"`, `"America/New_York"`, `"UTC"`). Defaults to `"Asia/Kolkata"`. |
+| `mode` | `"scheduled"` (default) or `"random"` (opt-in). See below. |
+| `schedule` | Array of `{ date, commits }` entries. Only these dates get commits. |
+
+### `schedule` entries
+
+- **`date`** — the calendar day in `YYYY-MM-DD` format. Only this day gets commits.
+- **`commits`** — how many commits to create on that day (positive integer).
+
+Every date **not** listed gets **zero** commits.
+
+### Comments are allowed
+
+`config.json` supports `//` and `/* */` comments (JSON5 format). Use this to temporarily turn dates on/off:
+
+```json
+{
+  "timezone": "Asia/Kolkata",
+  "mode": "scheduled",
+
+  "schedule": [
+    { "date": "2026-09-07", "commits": 5 }
+    // ,{ "date": "2026-08-30", "commits": 3 }
+    // ,{ "date": "2026-09-15", "commits": 2 }
+  ]
+}
 ```
 
-Every other date gets nothing.
+Only `2026-09-07` gets commits. The commented entries are ignored.
 
 ---
 
-## How timezone works
+## Timezone
 
 The tool is **timezone-aware**. The `date` you write represents the intended calendar day **in the configured timezone**.
 
-- The default (and recommended value for you) is `"Asia/Kolkata"` (`UTC+05:30`).
-- Timestamps are generated with the correct offset baked in (e.g. `2026-08-30T14:30:00+05:30`), so a commit cannot "slip" onto the previous or next day.
-- Neither the machine's local timezone nor GitHub's view of the timestamp will change which day a commit lands on.
-
-If you are outside India, change `timezone` to your own IANA zone, e.g. `"America/New_York"` or `"UTC"`.
-
-> Rule: a configured date must never produce a commit on any other calendar day. The tool validates this before it pushes anything.
+- Timestamps are generated with the correct offset (e.g. `2026-08-30T14:30:00+05:30`).
+- A commit cannot "slip" onto the previous or next day.
+- If you are outside India, change `timezone` to your own IANA zone.
 
 ---
 
 ## Commands
 
-### 1. Validate (check your config without doing anything)
+| Command | What it does |
+|---------|-------------|
+| `npm run validate` | Check `config.json` for errors (no changes made) |
+| `npm run dry-run` | Preview exactly what will happen (no changes made) |
+| `npm run run` | Create the scheduled commits and push them to GitHub |
+| `npm run status` | Show configured dates, executed dates, and remaining commits |
+| `npm test` | Run the automated tests |
 
-```bash
-npm run validate
-```
-
-Reports whether `config.json` is valid, and lists any problems.
-
-### 2. Dry-run (preview, no Git changes)
-
-```bash
-npm run dry-run
-```
-
-Shows exactly what would happen:
-
-```
-  Hack Contribution Graph — dry run
-  ─────────────────────────────────
-
-  2026-08-30 → 3 commits
-    09:00
-    14:30
-    20:00
-  2026-09-02 → 1 commit
-    09:30
-  ...
-
-  Total dates: 4
-  Total commits: 11
-
-  No commits were created.
-  No changes were pushed.
-```
-
-Nothing is created or pushed.
-
-### 3. Execute (create and push the scheduled commits)
-
-```bash
-npm run run
-```
-
-Creates the remaining commits for each configured date and pushes them to your remote.
-
-### 4. Status (see progress)
-
-```bash
-npm run status
-```
-
-Shows configured dates, executed dates, remaining commits, totals.
+Always run `validate` and `dry-run` before `run`.
 
 ---
 
-## State tracking (prevents duplicates)
+## State Tracking (Prevents Duplicates)
 
-A local file **`state.json`** (created automatically) records how many commits have already been executed per date:
+A local file **`state.json`** (created automatically) records how many commits have been executed per date:
 
 ```json
 {
   "executed": {
-    "2026-08-30": 3
+    "2026-08-30": 3,
+    "2026-09-02": 1
   }
 }
 ```
 
-`state.json` is **git-ignored** — it never goes into your commit history, and it is local to your machine.
+`state.json` is **git-ignored** — it never goes into your commit history.
 
 Running `npm run run` compares your schedule against this state:
 
@@ -370,7 +261,7 @@ Running `npm run run` compares your schedule against this state:
   Skipping.
 ```
 
-If you change the commit count:
+If you increase a count:
 
 ```
 Requested: 5
@@ -378,27 +269,25 @@ Already executed: 3
 Remaining: 2
 ```
 
-…only the remaining **2** are created. Previously generated commits are never duplicated.
+Only the remaining **2** are created. Previously generated commits are never duplicated.
 
 ---
 
-## Changing an existing schedule
+## Changing an Existing Schedule
 
-Just edit `config.json` and run the commands again:
-
-1. Edit the schedule (add/remove dates, change counts).
+1. Edit `config.json` (add/remove dates, change counts).
 2. `npm run dry-run` to preview.
 3. `npm run run` to apply.
 
 The tool only creates commits that your schedule asks for and that you haven't already executed.
 
-> Note: if you already pushed a schedule and then **decrease** a count, the tool will never delete commits — it only makes sure it never creates more than the count. State counts are monotonically kept; lowering a number just means fewer remaining commits.
+> If you decrease a count, the tool will never delete commits — it only ensures it never creates more than the count.
 
 ---
 
-## Optional random mode (opt-in)
+## Optional Random Mode (Opt-in)
 
-Randomness is **off by default** and never chooses dates. It is only used if you explicitly set `"mode": "random"` and it only randomizes the **time of day** for commits on your configured dates — it never adds dates.
+Randomness is **off by default**. When you set `"mode": "random"`, it only randomizes the **time of day** for commits on your configured dates — it never adds or removes dates.
 
 ```json
 {
@@ -410,39 +299,27 @@ Randomness is **off by default** and never chooses dates. It is only used if you
 }
 ```
 
-In this mode, the 5 commits on `2026-09-07` get random (distinct) times within that day. The date is still exactly what you chose.
+The 5 commits on `2026-09-07` get random (distinct) times within that day.
 
 ---
 
-## Validation rules
+## Validation Rules
 
-The tool enforces these before doing anything:
-
-- **Date format** must be `YYYY-MM-DD`. Rejects `30-08-2026`, `08/30/2026`, `2026/08/30`.
-- **Commit count** must be a positive integer. Rejects `0`, `-1`, `1.5`, `"5"`, `null`.
-- **Duplicate dates** are rejected (a date may only appear once).
-- **Invalid real dates** are rejected (`2026-02-30`, `2026-13-01`, `2026-00-10`).
-- **Timezone** must be a valid IANA name.
-- **Mode** must be `"scheduled"` or `"random"`.
+- **Date format**: must be `YYYY-MM-DD` (rejects `30-08-2026`, `08/30/2026`).
+- **Commit count**: must be a positive integer (rejects `0`, `-1`, `1.5`, `"5"`, `null`).
+- **Duplicate dates**: rejected (each date may appear only once).
+- **Invalid dates**: rejected (`2026-02-30`, `2026-13-01`, `2026-00-10`).
+- **Timezone**: must be a valid IANA name.
+- **Mode**: must be `"scheduled"` or `"random"`.
 
 ---
 
-## Running the tests
+## Safety Warnings
 
-```bash
-npm test
-```
-
-Covers single/multiple dates, invalid dates, duplicate dates, zero commits, timezone correctness, scheduled (non-random) behavior, and the state/remaining logic.
-
----
-
-## Safety warnings
-
-- This tool rewrites Git commit dates. **Use it on a repo you own and don't mind rewriting.**
-- Running `npm run run` creates real commits and **pushes** them. Always run `npm run validate` and `npm run dry-run` first to be sure.
-- If you rewrite history or force-push, collaborators and any CI may be affected. Don't force-push shared branches.
-- `state.json` is local; if you switch machines or clear it, the tool will not know what was already executed and may create commits again. Keep it if you want accurate progress.
+- This tool rewrites Git commit dates. **Use it on a repo you own.**
+- `npm run run` creates real commits and **pushes** them. Always preview with `dry-run` first.
+- `state.json` is local. If you switch machines or delete it, the tool won't know what was already executed and may create commits again.
+- The tool uses your `git config user.name` and `user.email` for commits. Make sure these match your GitHub account.
 
 ---
 
@@ -450,13 +327,14 @@ Covers single/multiple dates, invalid dates, duplicate dates, zero commits, time
 
 | File | Purpose |
 |------|---------|
-| `config.json` | Your schedule — edit this. |
-| `index.js` | The CLI entry point. |
-| `lib/validate.js` | Configuration validation. |
-| `lib/schedule.js` | Builds the plan from config. |
-| `lib/timestamps.js` | Timezone-aware timestamp generation. |
-| `lib/state.js` | State read/write. |
-| `data.json` | The file that gets committed per scheduled commit. |
-| `state.json` | Progress tracking (git-ignored, auto-generated). |
-| `.gitignore` | Keeps `node_modules/` and `state.json` out of git. |
-| `index.test.js` | Automated tests. |
+| `config.json` | Your schedule — edit this |
+| `index.js` | CLI entry point |
+| `lib/validate.js` | Config validation |
+| `lib/schedule.js` | Builds the plan from config |
+| `lib/timestamps.js` | Timezone-aware timestamp generation |
+| `lib/state.js` | State read/write |
+| `data.json` | File that gets committed per scheduled commit |
+| `state.json` | Progress tracking (git-ignored, auto-generated) |
+| `package.json` | Dependencies |
+| `.gitignore` | Keeps `node_modules/` and `state.json` out of git |
+| `index.test.js` | Automated tests |

@@ -1,5 +1,19 @@
+# Dependencies — install with `npm install`
 node_modules/
 
 # Local execution state — never commit this to the repo.
 # It tracks how many commits have already been created per date.
 state.json
+
+# Legacy generated files
+.data.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
