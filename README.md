@@ -44,6 +44,104 @@ npm install
 
 ---
 
+## Running it on THIS live repo (as the repo owner)
+
+Your cloned repo already points at the live GitHub repo via its `origin` remote. To run the tool on it:
+
+```bash
+cd Hack_Contribution_Graph
+
+# 1. Make sure it is the latest, and confirm your remote
+git pull origin main
+git remote -v        # should show https://github.com/Harsh-Codes-77/Hack_Contribution_Graph
+
+# 2. Install dependencies the first time
+npm install
+
+# 3. Edit config.json with your schedule (dates + commit counts)
+
+# 4. Preview what will happen (no changes made)
+npm run validate
+npm run dry-run
+
+# 5. Actually create the commits and push them to GitHub
+npm run run
+
+# 6. Check progress at any time
+npm run status
+```
+
+Because this repo is its own Git repository, `npm run run` literally rewrites this repo's history on the dates in `config.json`, then pushes those commits to your `origin/main`.
+
+> The commits created by `npm run run` all touch the `data.json` file, so the tool itself lives in history alongside the scheduled commits.
+
+---
+
+## Using it on YOUR OWN repository
+
+You don't have to use this repo as the target. Anyone can reuse the tool on their own GitHub repository. There are two ways:
+
+### Option A — Run inside your own repo (recommended)
+
+Copy the tool's scripts into your own repository, so the scheduled commits modify **your** files and get pushed to **your** repo.
+
+```bash
+cd path/to/your-own-repo
+
+# Copy the tool files in
+cp /path/to/cloned/Hack_Contribution_Graph/index.js \
+   /path/to/cloned/Hack_Contribution_Graph/config.json \
+   /path/to/cloned/Hack_Contribution_Graph/package.json \
+   /path/to/cloned/Hack_Contribution_Graph/.gitignore \
+   .
+cp -r /path/to/cloned/Hack_Contribution_Graph/lib .
+
+# (Also copy index.test.js if you want the tests.)
+
+# Install the tool's dependencies
+npm install
+
+# Edit config.json
+#   - set timezone to YOUR timezone
+#   - set the schedule (date + commits per date)
+
+# Verify your remote points at YOUR repo
+git remote -v
+
+# Preview, then run
+npm run validate
+npm run dry-run
+npm run run
+```
+
+`npm run run` now writes commits into **your** repository and pushes them to **your** remote. The `config.json`/`index.js`/`lib/` files become part of your repo (and, if you commit them first, will already appear on your graph). Keep `state.json` out of git: it is already covered by the `.gitignore` in this repo and is local-only.
+
+### Option B — Do it without copying
+
+If you only want the *mechanism* but prefer not to copy files, you can point the existing clone at a different remote:
+
+```bash
+# Inside your Hack_Contribution_Graph clone
+git remote set-url origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
+```
+
+then edit `config.json` and run `npm run run`. The tool will push scheduled commits to whichever repo `origin` points at. (This replaces the repo's history with your scheduled commits, so only use it on a repo you want to fill with scheduled commits.)
+
+---
+
+## First-time setup checklist for a new/own repo
+
+1. **Choose a target repo** — an empty or scratch repo works best.
+2. **Install Node + Git** — see Requirements.
+3. **Clone or copy** the tool into that repo (Option A).
+4. **Set your timezone** in `config.json`.
+5. **Write your schedule** (dates + commit counts).
+6. **Confirm the remote** — `git remote -v` must point at the repo you want to fill.
+7. **Run `npm run validate` and `npm run dry-run`** first.
+8. **Run `npm run run`** to create and push the commits.
+
+---
+
 ## How it works
 
 ```
@@ -341,4 +439,5 @@ Covers single/multiple dates, invalid dates, duplicate dates, zero commits, time
 | `lib/state.js` | State read/write. |
 | `data.json` | The file that gets committed per scheduled commit. |
 | `state.json` | Progress tracking (git-ignored, auto-generated). |
+| `.gitignore` | Keeps `node_modules/` and `state.json` out of git. |
 | `index.test.js` | Automated tests. |
