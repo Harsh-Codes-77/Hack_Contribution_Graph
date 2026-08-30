@@ -42,6 +42,17 @@ function loadOrCreateState() {
     return readState();
 }
 
+async function getGitIdentity() {
+    try {
+        const name = (await git.raw(["config", "user.name"])).trim();
+        const email = (await git.raw(["config", "user.email"])).trim();
+        if (name && email) return { name, email };
+    } catch {
+        // fall through to defaults
+    }
+    return { name: process.env.GIT_AUTHOR_NAME || "Hack Contribution Graph", email: process.env.GIT_AUTHOR_EMAIL || "contributions@local" };
+}
+
 function box(title) {
     const line = "─".repeat(Math.max(10, title.length));
     console.log("");
@@ -218,6 +229,10 @@ async function cmdRun() {
         return 0;
     }
 
+    const identity = await getGitIdentity();
+    const author = `${identity.name} <${identity.email}>`;
+    console.log(`  Author identity: ${author} (must match a verified email on your GitHub account for the graph to count it)`);
+
     console.log(`  Creating ${pending.reduce((a, p) => a + p.times.length, 0)} commit(s)...`);
     const update = { ...executed };
 
@@ -231,7 +246,7 @@ async function cmdRun() {
                 .env({ ...process.env, GIT_COMMITTER_DATE: iso })
                 .commit(name, [], {
                     "--date": iso,
-                    "--author": `Scheduled <scheduled@local>`,
+                    "--author": author,
                 });
         }
         update[p.date] = (update[p.date] || 0) + p.times.length;
